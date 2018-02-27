@@ -1,0 +1,76 @@
+
+# sudo sysctl -w vm.max_map_count=262144
+
+version: '2'
+
+services:
+  
+  mongo:
+    image: mongo:3
+    networks:
+      main:
+        aliases:
+          - mongo
+  
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:5.6.8
+    environment:
+      http.host: 0.0.0.0
+      xpack.security.enabled: "false"
+      cluster.name: graylog
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      http_proxy: $http_proxy
+      https_proxy: $https_proxy
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    mem_limit: 1g
+    command: bash -c "curl --max-time 5 -sSfL -o bin/wait-for-it.sh https://github.com/vishnubob/wait-for-it/raw/master/wait-for-it.sh && chmod +x bin/wait-for-it.sh && wait-for-it.sh mongo:27017 --timeout=0 --strict -- /bin/bash bin/es-docker"
+    networks:
+      main:
+        aliases:
+          - elasticsearch
+
+  graylog:
+    image: graylog2/graylog:2.4
+    ports:
+      - 9000:9000/tcp
+      - 5044:5044/tcp
+      - 5044:5044/udp
+      - 5555:5555/tcp
+      - 5555:5555/udp 
+      - 8514:8514/tcp
+      - 8514:8514/udp
+      - 12201:12201/tcp
+      - 12201:12201/udp
+    environment:
+      GRAYLOG_WEB_ENDPOINT_URI: /api
+      http_proxy: $http_proxy
+      https_proxy: $https_proxy
+    command: bash -c "curl --max-time 5 -sSfL -o bin/wait-for-it.sh https://github.com/vishnubob/wait-for-it/raw/master/wait-for-it.sh && chmod +x bin/wait-for-it.sh && wait-for-it.sh elasticsearch:9200 --timeout=0 --strict -- /docker-entrypoint.sh graylog"
+    networks:
+      main:
+        aliases:
+          - graylog
+
+  helper:
+    build:
+      context: ./graylog-helper
+      args:
+        http_proxy: $http_proxy
+        https_proxy: $https_proxy
+    environment:
+      http_proxy: $http_proxy
+      https_proxy: $https_proxy
+    entrypoint: bash -c "curl --max-time 5 -sSfL -o bin/wait-for-it.sh https://github.com/vishnubob/wait-for-it/raw/master/wait-for-it.sh && chmod +x bin/wait-for-it.sh && wait-for-it.sh graylog:9000 --timeout=0 --strict -- bash /docker-entrypoint.sh"
+    networks:
+      main:
+        aliases:
+          - helper
+
+networks:
+  main:
