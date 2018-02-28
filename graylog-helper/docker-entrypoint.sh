@@ -110,3 +110,6 @@ echo -e '{"version": "1.1","host":"'$(hostname)'","message":"Short message GELF 
 
 echo "Sending message to GELF UDP..."
 echo -e '{"version": "1.1","host":"'$(hostname)'","message":"Short message GELF UDP","level": 5, "_user_id": 9001, "_some_info": "foo", "_some_env_var": "bar"}\0' | nc -w 1 -u graylog 12201
+
+echo "Dismissing quickstart guide..."
+curl --noproxy '*' -sSf -X POST -u admin:admin -H "Content-Type: application/json" http://graylog:9000/api/system/gettingstarted/dismiss -d '{}'  > /dev/null
