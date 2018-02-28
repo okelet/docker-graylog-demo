@@ -24,6 +24,12 @@ Create the environment:
 docker-compose up -d --build
 ```
 
+Or overriding the time zone:
+
+```
+GRAYLOG_ROOT_TIMEZONE=Europe/Madrid docker-compose up -d --build
+```
+
 The provision can take some minutes (mostly setting up the database); you can monitor the LOGs using the command below.
 
 Once finished, you can access the Graylog Web UI using the URL [http://localhost:9000](http://localhost:9000), and the username `admin` and the password `admin`. Helper should have created some LOG messages that can be viewed in the search section.
